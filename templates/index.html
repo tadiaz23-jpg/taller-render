@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculadora TBD + Feature Toggles</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f6f9; margin: 0; padding: 40px; display: flex; justify-content: center; }
+        .card { background: white; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); padding: 30px; width: 100%; max-width: 480px; }
+        h1 { color: #2c3e50; font-size: 24px; margin-bottom: 8px; text-align: center; }
+        p.subtitle { color: #7f8c8d; font-size: 14px; text-align: center; margin-bottom: 24px; }
+        .form-group { margin-bottom: 16px; }
+        label { display: block; margin-bottom: 6px; font-weight: 600; color: #34495e; }
+        input[type="number"] { width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box; font-size: 16px; }
+        .btn-group { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 20px; }
+        button { padding: 12px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; transition: all 0.2s; font-size: 16px; }
+        .btn-primary { background-color: #3b82f6; color: white; }
+        .btn-primary:hover { background-color: #2563eb; }
+        .btn-success { background-color: #10b981; color: white; }
+        .btn-success:hover { background-color: #059669; }
+        .btn-warning { background-color: #f59e0b; color: white; }
+        .btn-warning:hover { background-color: #d97706; }
+        .btn-danger { background-color: #ef4444; color: white; }
+        .btn-danger:hover { background-color: #dc2626; }
+        .disabled-badge { font-size: 11px; background: #e2e8f0; color: #64748b; padding: 2px 6px; border-radius: 4px; margin-left: 6px; display: inline-block; }
+        .result-box { margin-top: 24px; padding: 16px; border-radius: 6px; background-color: #f8fafc; border: 1px solid #e2e8f0; text-align: center; font-size: 18px; font-weight: bold; color: #1e293b; }
+        .badge-toggle { display: inline-block; padding: 4px 8px; border-radius: 12px; font-size: 12px; font-weight: 600; }
+        .badge-on { background: #dcfce7; color: #15803d; }
+        .badge-off { background: #fee2e2; color: #b91c1c; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h1>Calculadora TBD</h1>
+        <p class="subtitle">Demostración de Trunk-Based Development & Feature Flags con ConfigCat</p>
+        
+        <div style="margin-bottom: 20px; font-size: 13px;">
+            <strong>Estado de Feature Toggles:</strong><br>
+            Multiplicación: 
+            {% if multiplicacion_enabled %}
+                <span class="badge-toggle badge-on">🟢 ON (Desplegado)</span>
+            {% else %}
+                <span class="badge-toggle badge-off">🔴 OFF (Oculto)</span>
+            {% endif %}
+            <br>
+            División: 
+            {% if division_enabled %}
+                <span class="badge-toggle badge-on">🟢 ON (100% Rollout)</span>
+            {% else %}
+                <span class="badge-toggle badge-off">🔴 OFF (Oculto/Rollout 10%)</span>
+            {% endif %}
+        </div>
+
+        <div class="form-group">
+            <label for="numA">Número A</label>
+            <input type="number" id="numA" value="10" step="any">
+        </div>
+        <div class="form-group">
+            <label for="numB">Número B</label>
+            <input type="number" id="numB" value="5" step="any">
+        </div>
+
+        <div class="btn-group">
+            <button class="btn-primary" onclick="calcular('sumar')">+ Sumar</button>
+            <button class="btn-warning" onclick="calcular('restar')">- Restar</button>
+
+            {% if multiplicacion_enabled %}
+                <button class="btn-success" onclick="calcular('multiplicar')">× Multiplicar</button>
+            {% else %}
+                <button class="btn-success" disabled style="opacity: 0.4; cursor: not-allowed;" title="Deshabilitado por Feature Toggle">× Multiplicar <span class="disabled-badge">Toggle OFF</span></button>
+            {% endif %}
+
+            {% if division_enabled %}
+                <button class="btn-danger" onclick="calcular('dividir')">÷ Dividir</button>
+            {% else %}
+                <button class="btn-danger" disabled style="opacity: 0.4; cursor: not-allowed;" title="Deshabilitado por Feature Toggle">÷ Dividir <span class="disabled-badge">Toggle OFF</span></button>
+            {% endif %}
+        </div>
+
+        <div class="result-box" id="result">
+            Resultado: <span id="resValue">-</span>
+        </div>
+    </div>
+
+    <script>
+        async function calcular(operacion) {
+            const a = parseFloat(document.getElementById('numA').value);
+            const b = parseFloat(document.getElementById('numB').value);
+            const resValue = document.getElementById('resValue');
+            resValue.innerText = 'Calculando...';
+
+            try {
+                const response = await fetch(`/api/${operacion}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ a, b })
+                });
+
+                const data = await response.json();
+                if (response.ok) {
+                    resValue.innerText = `${data.resultado}`;
+                } else {
+                    resValue.innerText = `Error: ${data.message || data.error}`;
+                }
+            } catch (err) {
+                resValue.innerText = `Error de conexión: ${err.message}`;
+            }
+        }
+    </script>
+</body>
+</html>

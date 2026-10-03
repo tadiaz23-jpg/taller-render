@@ -1,0 +1,21 @@
+# Render Blueprint Specification (render.yaml)
+# Configuración Infraestructura como Código (IaC) para Render
+
+services:
+  - type: web
+    name: calculadora-tbd-app
+    env: python
+    region: oregon
+    plan: free
+    branch: main
+    autoDeploy: true
+    buildCommand: "pip install -r requirements.txt && pytest"
+    startCommand: "gunicorn --bind 0.0.0.0:$PORT app:app"
+    healthCheckPath: /health
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.10
+      - key: CONFIGCAT_SDK_KEY
+        sync: false # Configurar en el Dashboard de Render para producción
+      - key: FLASK_ENV
+        value: production
