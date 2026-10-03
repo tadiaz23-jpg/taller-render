@@ -28,14 +28,19 @@ jobs:
           pip install -r requirements.txt
 
       - name: 🧪 Ejecutar Pruebas Automatizadas (pytest)
+        env:
+          PYTHONPATH: .
         run: |
-          pytest -v --junitxml=test-results.xml
+          python -m pytest -v --junitxml=test-results.xml
 
   # Job 2: Build & Push de la Imagen Docker a GHCR
   docker-build:
     name: 🐳 Docker - Build & Push (GHCR)
     needs: ci-test
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
     if: github.ref == 'refs/heads/main'
 
     steps:
